@@ -1,0 +1,846 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Lilac accent (#9a81c4) */
+  --color-lilac-50: #f5f1fa;
+  --color-lilac-100: #ece4f5;
+  --color-lilac-200: #ddd1ec;
+  --color-lilac-300: #c9b6e2;
+  --color-lilac-400: #b29cd6;
+  --color-lilac-500: #9a81c4;
+  --color-lilac-600: #8265b3;
+  --color-lilac-700: #6d4f9e;
+  --color-lilac-800: #4d3a70;
+  --color-lilac-900: #342750;
+  --color-lilac-950: #201731;
+
+  /* Amber contrast accent (#e7a269) */
+  --color-amber-50: #fdf3e7;
+  --color-amber-100: #fae4ca;
+  --color-amber-200: #f5d1a3;
+  --color-amber-300: #eeb97b;
+  --color-amber-400: #e7a269;
+  --color-amber-500: #dc894c;
+  --color-amber-600: #c26e39;
+  --color-amber-700: #9e542d;
+  --color-amber-800: #7d4227;
+  --color-amber-900: #5e3120;
+  --color-amber-950: #402016;
+
+  /* Plum-cool neutral scale (replaces zinc) */
+  --color-zinc-50: #f6f6f8;
+  --color-zinc-100: #ececf1;
+  --color-zinc-200: #dcdce4;
+  --color-zinc-300: #c3c4d0;
+  --color-zinc-400: #a1a2b4;
+  --color-zinc-500: #83849a;
+  --color-zinc-600: #6b6c82;
+  --color-zinc-700: #54556a;
+  --color-zinc-800: #3b3c4d;
+  --color-zinc-900: #272833;
+  --color-zinc-950: #121214;
+
+  /* Calm success greens (replaces emerald) */
+  --color-emerald-50: #eef5f0;
+  --color-emerald-100: #dcebe2;
+  --color-emerald-200: #bad7c6;
+  --color-emerald-300: #93bfaa;
+  --color-emerald-400: #6ba38d;
+  --color-emerald-500: #4f8874;
+  --color-emerald-600: #3f6f5f;
+  --color-emerald-700: #33584c;
+  --color-emerald-800: #2a463d;
+  --color-emerald-900: #223831;
+  --color-emerald-950: #18251f;
+
+  /* Brick danger reds (replaces rose) */
+  --color-rose-50: #fbf0ee;
+  --color-rose-100: #f6dfdc;
+  --color-rose-200: #ecc0ba;
+  --color-rose-300: #dd9b92;
+  --color-rose-400: #cb6f63;
+  --color-rose-500: #b4554a;
+  --color-rose-600: #944239;
+  --color-rose-700: #71332c;
+  --color-rose-800: #542823;
+  --color-rose-900: #3e1f1c;
+  --color-rose-950: #2a1513;
+
+  /* Surfaces */
+  --color-canvas: #f2f1f6;
+  --color-surface: #fbfafd;
+  --color-raised: #ffffff;
+  --color-wash: #eae8f0;
+  --color-line: #e0dde9;
+  --color-ink: #262430;
+  --color-ink-2: #55505f;
+  --color-ink-3: #6a5f8e;
+
+  --font-sans:
+    'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  /* Meta size: descriptions, timestamps, table rows, status bars. The app used
+     to reach for an arbitrary text-micro/text-meta; this puts it on the
+     scale so every piece of secondary text matches. */
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.5;
+
+  /* Micro size: chips, tags, kbd hints, uppercase captions. The smallest step
+     on the scale; anything smaller is a dot, not text. */
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.5;
+
+  /* Two-step radius scale. Cards and modals take the large step, everything
+     else the small step. Nothing else should introduce a radius. The inherited
+     Tailwind steps collapse onto these two so a stray rounded-md/xl can never
+     re-introduce a third, off-brand corner. */
+  --radius-panel: 0.5rem;
+  --radius-control: 0.25rem;
+  --radius-xs: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-panel);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-panel);
+}
+
+.dark {
+  --color-canvas: #131019;
+  --color-surface: #1b1726;
+  --color-raised: #201b2c;
+  --color-wash: #282235;
+  --color-line: #302a42;
+  --color-ink: #ece8f5;
+  --color-ink-2: #a9a2ba;
+  --color-ink-3: #9f97b4;
+}
+
+/*
+ * Semantic tones.
+ *
+ * Every status, alert, and pill in the app used to spell out its own colour
+ * ramp plus a `dark:` twin — 618 raw palette classes, 257 of them duplicated
+ * for dark mode. These five tones carry the whole set instead, and they flip
+ * with the theme, so no component ever needs a `dark:` variant for a tone.
+ *
+ * Use data-tone="neutral|info|success|warn|danger" on any element, then style
+ * it with .alert, .tone-pill, .tone-text, or .tone-bar.
+ */
+:root {
+  --tone-neutral-fg: var(--color-ink-2);
+  --tone-neutral-bg: var(--color-wash);
+  --tone-neutral-border: var(--color-line);
+
+  --tone-info-fg: var(--color-lilac-700);
+  --tone-info-bg: var(--color-lilac-50);
+  --tone-info-border: var(--color-lilac-200);
+
+  --tone-success-fg: var(--color-emerald-600);
+  --tone-success-bg: var(--color-emerald-50);
+  --tone-success-border: var(--color-emerald-200);
+
+  --tone-warn-fg: var(--color-amber-700);
+  --tone-warn-bg: var(--color-amber-50);
+  --tone-warn-border: var(--color-amber-200);
+
+  --tone-danger-fg: var(--color-rose-600);
+  --tone-danger-bg: var(--color-rose-50);
+  --tone-danger-border: var(--color-rose-200);
+}
+
+.dark {
+  --tone-neutral-fg: var(--color-ink-2);
+  --tone-neutral-bg: var(--color-raised);
+  --tone-neutral-border: var(--color-line);
+
+  --tone-info-fg: var(--color-lilac-300);
+  --tone-info-bg: var(--color-lilac-900);
+  --tone-info-border: var(--color-lilac-800);
+
+  --tone-success-fg: var(--color-emerald-300);
+  --tone-success-bg: var(--color-emerald-900);
+  --tone-success-border: var(--color-emerald-800);
+
+  --tone-warn-fg: var(--color-amber-300);
+  --tone-warn-bg: var(--color-amber-900);
+  --tone-warn-border: var(--color-amber-800);
+
+  --tone-danger-fg: var(--color-rose-300);
+  --tone-danger-bg: var(--color-rose-900);
+  --tone-danger-border: var(--color-rose-800);
+}
+
+[data-tone='neutral'] {
+  --tone-fg: var(--tone-neutral-fg);
+  --tone-bg: var(--tone-neutral-bg);
+  --tone-border: var(--tone-neutral-border);
+}
+
+[data-tone='info'] {
+  --tone-fg: var(--tone-info-fg);
+  --tone-bg: var(--tone-info-bg);
+  --tone-border: var(--tone-info-border);
+}
+
+[data-tone='success'] {
+  --tone-fg: var(--tone-success-fg);
+  --tone-bg: var(--tone-success-bg);
+  --tone-border: var(--tone-success-border);
+}
+
+[data-tone='warn'] {
+  --tone-fg: var(--tone-warn-fg);
+  --tone-bg: var(--tone-warn-bg);
+  --tone-border: var(--tone-warn-border);
+}
+
+[data-tone='danger'] {
+  --tone-fg: var(--tone-danger-fg);
+  --tone-bg: var(--tone-danger-bg);
+  --tone-border: var(--tone-danger-border);
+}
+
+@layer base {
+  html {
+    scrollbar-color: var(--color-zinc-400) transparent;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  ::selection {
+    background: var(--color-lilac-500);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-lilac-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: var(--radius-control);
+    padding: 0.6rem 0.95rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .btn-primary {
+    background: var(--color-lilac-600);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-lilac-700);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--color-surface);
+    border-color: var(--color-line);
+    color: var(--color-ink);
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-wash);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--color-ink-2);
+  }
+
+  .btn-ghost:hover {
+    color: var(--color-ink);
+    background: var(--color-wash);
+  }
+
+  .btn-danger {
+    background: var(--color-rose-600);
+    color: #fff;
+  }
+
+  .btn-danger:hover {
+    background: var(--color-rose-700);
+  }
+
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .input {
+    width: 100%;
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .input:focus {
+    border-color: var(--color-lilac-500);
+    box-shadow: 0 0 0 3px rgba(154, 129, 196, 0.22);
+  }
+
+  .input::placeholder {
+    color: var(--color-ink-3);
+  }
+
+  /*
+   * <select> styled as a control. The app previously put .input straight on
+   * <select>, which left the native dropdown chevron in place and the padding
+   * out of step with the text inputs. Use .select on <select> instead.
+   */
+  .select {
+    appearance: none;
+    padding-right: 1.75rem;
+    background-image:
+      linear-gradient(45deg, transparent 50%, currentcolor 50%),
+      linear-gradient(135deg, currentcolor 50%, transparent 50%);
+    background-position:
+      calc(100% - 0.95rem) calc(50% + 1px),
+      calc(100% - 0.65rem) calc(50% + 1px);
+    background-size:
+      5px 5px,
+      5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .card {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: var(--radius-control);
+    padding: 0.18rem 0.45rem;
+    font-size: var(--text-meta);
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .label {
+    font-size: var(--text-meta);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-ink-3);
+  }
+
+  /*
+   * Tone shapes. data-tone="neutral|info|success|warn|danger" picks the colour
+   * trio (--tone-fg/-bg/-border), and these shapes apply it. Prefer these over
+   * hand-rolled rose/amber pills with a dark: twin -- every status, alert, and
+   * badge in the app should route through one of them.
+   */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--tone-border);
+    border-radius: var(--radius-panel);
+    background: var(--tone-bg);
+    color: var(--tone-fg);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .tone-pill {
+    background: var(--tone-bg);
+    border-color: var(--tone-border);
+    color: var(--tone-fg);
+  }
+
+  .tone-text {
+    color: var(--tone-fg);
+  }
+
+  .tone-bar {
+    background: var(--tone-bg);
+  }
+}
+
+/* Markdown typography for Terms, Privacy, and Readmes */
+.markdown-body {
+  color: var(--color-ink-2);
+  line-height: 1.68;
+  font-size: 0.95rem;
+}
+
+.markdown-body h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-line);
+  padding-bottom: 0.5rem;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.markdown-body h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+}
+
+.markdown-body h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-ink);
+}
+
+.markdown-body p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-body code {
+  background-color: var(--color-lilac-50);
+  color: var(--color-lilac-700);
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-control);
+  font-size: 0.875em;
+  font-family: var(--font-mono);
+  border: 1px solid var(--color-lilac-200);
+}
+
+.dark .markdown-body code {
+  background-color: var(--color-lilac-900);
+  color: var(--color-lilac-300);
+  border-color: var(--color-lilac-800);
+}
+
+.markdown-body pre {
+  background-color: #17151d;
+  color: #ece8f5;
+  padding: 1rem;
+  border-radius: var(--radius-panel);
+  overflow-x: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #2a2634;
+}
+
+.dark .markdown-body pre {
+  background-color: #0e0c13;
+  border-color: #221e2b;
+}
+
+.markdown-body pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: 0.9em;
+}
+
+/*
+ * Icons.
+ *
+ * Lucide, rendered as inline SVG. Every glyph is drawn on a 24-unit grid
+ * with the stroke optically centered in its viewBox, so a flex row or button
+ * aligns it to the text with no per-glyph corrections of the kind the
+ * Material font needed.
+ *
+ * The span carries size and tint. The SVG is pinned to the current font size
+ * with 1em, so .icon-xs through .icon-3xl along with the text-* utilities
+ * all just work. Stroke and fill use currentColor, so an icon follows the
+ * tone of the text around it. .icon-filled decides whether the drawn outline
+ * is solid-filled, the role the Material FILL axis used to play.
+ */
+.icon {
+  /*
+   * Track whatever the surrounding text is set at, so an icon next to 11px
+   * metadata is 11px too. A fixed size here left unsized icons a full 16px
+   * inside text-xs labels and buttons. The .icon-* steps below still win,
+   * since they come later in the cascade.
+   */
+  font-size: inherit;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  /*
+   * True inline (non-flex) text runs anchor an inline-flex icon to the text
+   * baseline. Middle puts the icon's center on the parent's x-height line,
+   * where the lowercase letters it sits next to are centered. Flex rows
+   * ignore vertical-align entirely, so this only touches genuine inline
+   * embedding.
+   */
+  vertical-align: middle;
+  user-select: none;
+}
+
+.icon svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.icon-xs {
+  font-size: 0.75rem;
+}
+
+.icon-sm {
+  font-size: 0.875rem;
+}
+
+.icon-lg {
+  font-size: 1.25rem;
+}
+
+.icon-xl {
+  font-size: 1.5rem;
+}
+
+.icon-2xl {
+  font-size: 2rem;
+}
+
+.icon-3xl {
+  font-size: 2.5rem;
+}
+
+@layer components {
+  /* Modals: one overlay, one panel, one entrance. */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(4px);
+    /* Keep a scroll gesture inside the panel from chaining to the page. */
+    overscroll-behavior: contain;
+    animation: modal-overlay-in 140ms ease-out both;
+  }
+
+  .modal-panel {
+    width: 100%;
+    /* Height is capped so the panel scrolls internally instead of the page. */
+    max-height: 85vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 20px 40px -12px rgb(15 12 24 / 0.35);
+    animation: modal-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /*
+   * Full-screen variants (the Markdown editor, site metrics, source review) are
+   * the dialog surface itself: no backdrop, no inset, nothing to scroll around.
+   */
+  .modal-panel-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--color-surface);
+    animation-name: modal-fullscreen-in;
+  }
+}
+
+@keyframes modal-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes modal-fullscreen-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-panel {
+    animation: none;
+  }
+}
+
+/*
+ * Sidebar. One column, two widths: the full column, and the icon rail it
+ * collapses to. The width is a custom property so the transition animates a
+ * single value rather than two competing width utilities.
+ */
+.sidebar-rail {
+  width: 15rem;
+  transition: width 180ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] {
+  width: 3.5rem;
+}
+
+/*
+ * Expanded, the contents scroll inside the column. Collapsed, the rail is short
+ * enough to fit any laptop, and leaving it unclipped is what lets the label
+ * flyouts escape sideways instead of being cut off at the column edge.
+ */
+.sidebar-rail[data-collapsed='false'] .sidebar-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/*
+ * Collapsed: icons stand in for the labels, which fly out on hover or focus.
+ */
+.sidebar-rail[data-collapsed='true'] [data-tip] {
+  position: relative;
+}
+.sidebar-rail[data-collapsed='true'] [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 0.5rem);
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 60;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-control);
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+  font-size: var(--text-meta);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.sidebar-rail[data-collapsed='true'] [data-tip]:hover::after,
+.sidebar-rail[data-collapsed='true'] [data-tip]:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-rail {
+    transition: none;
+  }
+
+  .sidebar-rail[data-collapsed='true'] [data-tip]::after {
+    transition: none;
+  }
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--color-lilac-500);
+  padding-left: 1rem;
+  color: var(--color-ink-2);
+  margin: 1rem 0;
+  font-style: italic;
+}
+
+.markdown-body a {
+  color: var(--color-lilac-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dark .markdown-body a {
+  color: var(--color-lilac-300);
+}
+
+.markdown-body a:hover {
+  color: var(--color-lilac-700);
+}
+
+.dark .markdown-body a:hover {
+  color: var(--color-lilac-200);
+}
+
+/* Syntax highlighting (Prism) for code editors and rendered Markdown */
+:is(.code-highlight, .markdown-body) .token.comment,
+:is(.code-highlight, .markdown-body) .token.prolog,
+:is(.code-highlight, .markdown-body) .token.doctype,
+:is(.code-highlight, .markdown-body) .token.cdata {
+  color: #6b7280;
+  font-style: italic;
+}
+
+:is(.code-highlight, .markdown-body) .token.punctuation {
+  color: #a6accd;
+}
+
+:is(.code-highlight, .markdown-body) .token.namespace {
+  opacity: 0.7;
+}
+
+:is(.code-highlight, .markdown-body) .token.property,
+:is(.code-highlight, .markdown-body) .token.tag,
+:is(.code-highlight, .markdown-body) .token.constant,
+:is(.code-highlight, .markdown-body) .token.symbol,
+:is(.code-highlight, .markdown-body) .token.deleted {
+  color: #ff8b98;
+}
+
+:is(.code-highlight, .markdown-body) .token.boolean,
+:is(.code-highlight, .markdown-body) .token.number {
+  color: #f78c6c;
+}
+
+:is(.code-highlight, .markdown-body) .token.selector,
+:is(.code-highlight, .markdown-body) .token.attr-name,
+:is(.code-highlight, .markdown-body) .token.string,
+:is(.code-highlight, .markdown-body) .token.char,
+:is(.code-highlight, .markdown-body) .token.builtin,
+:is(.code-highlight, .markdown-body) .token.inserted {
+  color: #c3e88d;
+}
+
+:is(.code-highlight, .markdown-body) .token.operator,
+:is(.code-highlight, .markdown-body) .token.entity,
+:is(.code-highlight, .markdown-body) .token.url,
+:is(.code-highlight, .markdown-body) .token.variable {
+  color: #89ddff;
+}
+
+:is(.code-highlight, .markdown-body) .token.atrule,
+:is(.code-highlight, .markdown-body) .token.attr-value,
+:is(.code-highlight, .markdown-body) .token.function,
+:is(.code-highlight, .markdown-body) .token.class-name {
+  color: #82aaff;
+}
+
+:is(.code-highlight, .markdown-body) .token.keyword {
+  color: #c792ea;
+}
+
+:is(.code-highlight, .markdown-body) .token.regex,
+:is(.code-highlight, .markdown-body) .token.important {
+  color: #ffcb6b;
+}
+
+:is(.code-highlight, .markdown-body) .token.important,
+:is(.code-highlight, .markdown-body) .token.bold {
+  font-weight: 600;
+}
+
+:is(.code-highlight, .markdown-body) .token.italic {
+  font-style: italic;
+}
+
+:is(.code-highlight, .markdown-body) .token.entity {
+  cursor: help;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

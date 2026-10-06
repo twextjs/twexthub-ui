@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+
+# Single-line raster-exports; formatting would rewrite the embedded base64.
+public/assets/*.svg

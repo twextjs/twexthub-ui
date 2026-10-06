@@ -1,0 +1,13 @@
+name: 'TwextHub UI'
+version: '1.1.0'
+tagline: 'The official web frontend for TwextHub, the registry of Twext-compiled extensions ("Twexts") for use in TurboWarp'
+author: 'Twext Team'
+homepage: 'https://github.com/twextjs/twexthub-ui'
+symbols:
+  success: '✓'
+  error: '✗'
+  progress: '~'
+  bullet: '•'
+defaults:
+  port: 3000
+  fallbackColor: '#9a81c4'

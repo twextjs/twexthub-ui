@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - '8080:3000'
+    environment:
+      # The upstream TwextHub API that server.js forwards /api/v2 to. Read
+      # from the container environment at startup (overrides config.yml).
+      # If unset, server.js defaults to https://twexts.sdisk.us/api/v2.
+      # The container serves the UI on its own origin; the browser never talks
+      # to this host directly, so "localhost" here means the container's.
+      TWEXTHUB_API_URL: https://twexts.sdisk.us/api/v2

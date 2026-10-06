@@ -1,0 +1,93 @@
+import { vi } from 'vitest';
+import type { ProblemDetails } from '../../types/api';
+
+export class ApiError extends Error {
+  status: number;
+  problem?: ProblemDetails;
+
+  constructor(message: string, status: number, problem?: ProblemDetails) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.problem = problem;
+  }
+}
+
+export const api = {
+  getBaseUrl: vi.fn(() => 'http://localhost:3000/api/v2'),
+  getPublicBaseUrl: vi.fn(() => 'http://localhost:3000/api/v2'),
+  setBaseUrl: vi.fn(),
+  resetBaseUrl: vi.fn(),
+  getToken: vi.fn(() => null),
+  setToken: vi.fn(),
+  getStoredUser: vi.fn(() => null),
+  setStoredUser: vi.fn(),
+  getStats: vi.fn(),
+  getMeta: vi.fn(),
+  getExtensions: vi.fn(),
+  searchExtensions: vi.fn(),
+  getExtension: vi.fn(),
+  getTrendingExtensions: vi.fn(),
+  getDistTags: vi.fn(),
+  setDistTag: vi.fn(),
+  deleteDistTag: vi.fn(),
+  getExtensionOwners: vi.fn(),
+  addExtensionOwner: vi.fn(),
+  getPendingExtensionOwnerInvites: vi.fn(),
+  acceptExtensionOwner: vi.fn(),
+  removeExtensionOwner: vi.fn(),
+  getWebhooks: vi.fn(),
+  createWebhook: vi.fn(),
+  deleteWebhook: vi.fn(),
+  deprecateVersion: vi.fn(),
+  getAuditLog: vi.fn(),
+  getUserQuota: vi.fn(),
+  setUserQuota: vi.fn(),
+  broadcastNotification: vi.fn(async () => 0),
+  getServerConfig: vi.fn(),
+  updateServerConfig: vi.fn(),
+  getAdminMetrics: vi.fn(async () => ''),
+  getAtomFeedUrl: vi.fn(() => 'http://localhost:3000/api/v2/feed.atom'),
+  getNotifications: vi.fn(),
+  markNotificationsRead: vi.fn(),
+  getTerms: vi.fn(),
+  getPrivacy: vi.fn(),
+  getUsers: vi.fn(),
+  getUser: vi.fn(),
+  createOrganization: vi.fn(),
+  getOrganizations: vi.fn(),
+  getOrganization: vi.fn(),
+  updateOrganization: vi.fn(),
+  deleteOrganization: vi.fn(),
+  getOrganizationOwners: vi.fn(),
+  addOrganizationOwner: vi.fn(),
+  removeOrganizationOwner: vi.fn(),
+  getOrganizationExtensions: vi.fn(),
+  getOrganizationWebhooks: vi.fn(),
+  createOrganizationWebhook: vi.fn(),
+  deleteOrganizationWebhook: vi.fn(),
+  uploadOrganizationImage: vi.fn(),
+  deleteOrganizationImage: vi.fn(),
+  login: vi.fn(),
+  signup: vi.fn(),
+  logout: vi.fn(),
+  getMe: vi.fn(),
+  acceptTerms: vi.fn(),
+  updateUser: vi.fn(),
+  deleteUser: vi.fn(),
+  getSessions: vi.fn(),
+  revokeSession: vi.fn(),
+  getTokens: vi.fn(),
+  createToken: vi.fn(),
+  updateToken: vi.fn(),
+  deleteToken: vi.fn(),
+  deleteExtension: vi.fn(),
+  yankVersion: vi.fn(),
+  getVersion: vi.fn(),
+  downloadVersion: vi.fn(),
+  listVersionsForReview: vi.fn(),
+  reviewVersion: vi.fn(),
+  updateUserRole: vi.fn(),
+  updateTerms: vi.fn(),
+  updatePrivacyPolicy: vi.fn(),
+};
