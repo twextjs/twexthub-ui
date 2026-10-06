@@ -362,7 +362,12 @@ export const SHUTDOWN_GRACE_MS = 5_000;
  */
 export function shutdown(
   serverInstance,
-  { onExit = (code) => { process.exit(code); }, graceMs = SHUTDOWN_GRACE_MS } = {},
+  {
+    onExit = (code) => {
+      process.exit(code);
+    },
+    graceMs = SHUTDOWN_GRACE_MS,
+  } = {},
 ) {
   // `server.close` stops new connections and closes idle keep-alive ones, then
   // waits for active responses. If one never finishes, this timer still bounds

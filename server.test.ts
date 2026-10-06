@@ -7,7 +7,12 @@ vi.mock('node:http', () => {
   return { createServer, globalAgent, default: { createServer, globalAgent } };
 });
 
-import { isWithinUpstreamBase, proxyTargetFor, readApiBaseUrlFromYaml, shutdown } from './server.js';
+import {
+  isWithinUpstreamBase,
+  proxyTargetFor,
+  readApiBaseUrlFromYaml,
+  shutdown,
+} from './server.js';
 
 describe('readApiBaseUrlFromYaml', () => {
   it('reads unquoted values', () => {
