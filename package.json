@@ -61,7 +61,7 @@
     "monaco-editor": "^0.57.0",
     "prettier": "^3.9.9",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.2"
