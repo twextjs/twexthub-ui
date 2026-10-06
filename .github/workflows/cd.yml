@@ -6,7 +6,7 @@ concurrency:
 
 on:
   push:
-    branches: [main]
+    branches: [devel]
     tags: ['v*']
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/devel' }}
           labels: |
             org.opencontainers.image.title=TwextHub
             org.opencontainers.image.description=${{ github.event.repository.description }}
