@@ -32,7 +32,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",
     "diff": "^9.0.0",
-    "lucide-react": "^1.48.0",
+    "lucide-react": "^1.51.0",
     "motion": "^13.4.6",
     "prismjs": "^1.30.0",
     "react": "^19.0.1",
