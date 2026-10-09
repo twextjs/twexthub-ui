@@ -33,7 +33,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "diff": "^9.0.0",
     "lucide-react": "^1.51.0",
-    "motion": "^13.4.6",
+    "motion": "^14.0.0",
     "prismjs": "^1.30.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
