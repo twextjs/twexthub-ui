@@ -62,6 +62,8 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [pendingInvites, setPendingInvites] = useState<ExtensionOwnerInvite[]>([]);
   const [answeringInvite, setAnsweringInvite] = useState<string | null>(null);
   const [pendingTransfers, setPendingTransfers] = useState<ExtensionTransfer[]>([]);
+  const [transferLoadError, setTransferLoadError] = useState<string | null>(null);
+  const [transferLoadAttempt, setTransferLoadAttempt] = useState(0);
   const [answeringTransfer, setAnsweringTransfer] = useState<string | null>(null);
   const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
   const versionRequestRef = useRef<string | null>(null);
@@ -94,8 +96,9 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   // destination can only agree here, so a pending offer is announced on the page
   // it was sent for rather than left in the notification alone.
   useEffect(() => {
+    setPendingTransfers([]);
+    setTransferLoadError(null);
     if (!isAuthenticated) {
-      setPendingTransfers([]);
       return;
     }
     let isMounted = true;
@@ -104,14 +107,17 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       .then((rows) => {
         if (isMounted) setPendingTransfers(rows || []);
       })
-      .catch(() => {
-        // A caller with no offers to answer simply has none to show.
-        if (isMounted) setPendingTransfers([]);
+      .catch((err: unknown) => {
+        if (isMounted) {
+          setTransferLoadError(
+            err instanceof ApiError ? err.message : 'Could not load pending transfers.',
+          );
+        }
       });
     return () => {
       isMounted = false;
     };
-  }, [namespace, id, isAuthenticated]);
+  }, [namespace, id, isAuthenticated, transferLoadAttempt]);
 
   useEffect(() => {
     let isMounted = true;
@@ -531,6 +537,22 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       )}
 
       {/* A transfer moves the address, and only the destination can agree to it. */}
+      {transferLoadError && (
+        <div role="alert" data-tone="danger" className="alert items-center text-xs">
+          <Icon name="error" className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <strong className="font-semibold block">Could not load pending transfers</strong>
+            <span>{transferLoadError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTransferLoadAttempt((attempt) => attempt + 1)}
+            className="btn btn-secondary btn-sm"
+          >
+            Retry transfers
+          </button>
+        </div>
+      )}
       {pendingTransfers.length > 0 && (
         <div data-tone="info" className="alert">
           <Icon name="swap_horiz" className="icon-lg shrink-0" />
