@@ -22,6 +22,12 @@ const ACTION_STYLES: Record<string, string> = {
     'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
   'owner.remove':
     'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+  'extension.transfer.request':
+    'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
+  'extension.transfer.withdraw':
+    'bg-amber-50 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+  'extension.transfer':
+    'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
   'access.grant':
     'bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60',
   'access.revoke':
@@ -44,6 +50,9 @@ const ACTION_LABELS: Record<string, string> = {
   'tag.remove': 'Tag removed',
   'owner.add': 'Owner added',
   'owner.remove': 'Owner removed',
+  'extension.transfer.request': 'Transfer offered',
+  'extension.transfer.withdraw': 'Transfer withdrawn',
+  'extension.transfer': 'Extension transferred',
   'access.grant': 'Access given',
   'access.revoke': 'Access removed',
   'quota.set': 'Storage changed',

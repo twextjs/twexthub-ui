@@ -417,6 +417,21 @@ export interface ExtensionOwner {
   addedAt?: string;
 }
 
+/**
+ * An offer to move an extension to another namespace. It moves nothing on its
+ * own: the destination answers it, and until then the address keeps working.
+ */
+export interface ExtensionTransfer {
+  /** The namespace the extension is offered to. */
+  to: string;
+  displayName: string;
+  /** `organization` when the offer is addressed to one. */
+  kind?: NamespaceKind;
+  createdAt?: string;
+  /** The namespace that made the offer, or null if that account has since been deleted. */
+  requestedBy?: string | null;
+}
+
 /** Tag name to version, e.g. `{ latest: '1.2.0', next: '2.0.0-rc.1' }`. */
 export type DistTags = Record<string, string>;
 

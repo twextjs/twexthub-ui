@@ -11,6 +11,7 @@ import {
   makeExtensionOwnerInvite,
   makeUser,
   noop,
+  renderWithProviders,
 } from '../test/testUtils';
 
 vi.mock('../services/api');
@@ -39,6 +40,7 @@ beforeEach(() => {
   apiMock.getExtension.mockResolvedValue(versionedExtension());
   apiMock.getExtensionOwners.mockResolvedValue([]);
   apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([]);
+  apiMock.getExtensionTransfers.mockResolvedValue([]);
   apiMock.getUser.mockResolvedValue(makeUser({ namespace: 'kane', displayName: 'Kane' }));
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue(makeAuthState());
@@ -343,5 +345,78 @@ describe('ExtensionDetailPage', () => {
 
     expect(screen.getByText('Manage Extension')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete extension' })).toBeInTheDocument();
+  });
+
+  it('offers to transfer the extension to another namespace from the manage card', async () => {
+    const user = userEvent.setup();
+    // The panel toasts, so this render needs the provider the app wraps pages in.
+    renderWithProviders(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    await user.click(screen.getByRole('button', { name: 'Transfer' }));
+    await user.type(screen.getByLabelText('Destination namespace'), 'acme');
+    await user.click(screen.getByRole('button', { name: /Offer transfer/ }));
+
+    expect(apiMock.offerExtensionTransfer).toHaveBeenCalledWith('kane', 'demo', 'acme');
+  });
+
+  it('lets the destination accept a transfer and follows the extension to its new address', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'acme' }) }));
+    apiMock.getExtensionTransfers.mockResolvedValue([
+      {
+        to: 'acme',
+        displayName: 'Acme Inc',
+        kind: 'organization',
+        requestedBy: 'kane',
+      },
+    ]);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={onNavigate} />);
+
+    const row = await screen.findByTestId('pending-transfer');
+    expect(row).toHaveTextContent('@acme');
+    expect(row).toHaveTextContent('Acme Inc');
+    expect(row).toHaveTextContent('offered by @kane');
+
+    await user.click(within(row).getByRole('button', { name: /Accept transfer/ }));
+
+    expect(apiMock.acceptExtensionTransfer).toHaveBeenCalledWith('kane', 'demo', 'acme');
+    expect(onNavigate).toHaveBeenCalledWith('ext/acme/demo');
+  });
+
+  it('keeps the pending transfer when accepting it fails', async () => {
+    const user = userEvent.setup();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'acme' }) }));
+    apiMock.getExtensionTransfers.mockResolvedValue([
+      { to: 'acme', displayName: 'Acme Inc', requestedBy: 'kane' },
+    ]);
+    apiMock.acceptExtensionTransfer.mockRejectedValue(
+      new ApiError('@acme does not have room for this extension.', 409),
+    );
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-transfer');
+    await user.click(within(row).getByRole('button', { name: /Accept transfer/ }));
+
+    expect(
+      await screen.findByText('@acme does not have room for this extension.'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('pending-transfer')).toBeInTheDocument();
+  });
+
+  it('shows no transfer banner when nothing is waiting to be accepted', async () => {
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    expect(screen.queryByTestId('pending-transfer')).toBeNull();
+  });
+
+  it('does not ask a visitor for transfer offers it could not answer', async () => {
+    useAuthMock.mockReturnValue(makeAuthState({ user: null, token: null, isAuthenticated: false }));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    expect(apiMock.getExtensionTransfers).not.toHaveBeenCalled();
   });
 });

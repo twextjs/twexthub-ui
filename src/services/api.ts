@@ -10,6 +10,7 @@ import {
   ExtensionSummary,
   ExtensionOwner,
   ExtensionOwnerInvite,
+  ExtensionTransfer,
   InstanceStats,
   MarkNotificationsReadResult,
   Meta,
@@ -45,6 +46,7 @@ const SNAKE_FIELDS: Record<string, string> = {
   added_at: 'addedAt',
   created_at: 'createdAt',
   invited_by: 'invitedBy',
+  requested_by: 'requestedBy',
   last_delivery_status: 'lastDeliveryStatus',
   last_delivery_at: 'lastDeliveryAt',
 };
@@ -388,6 +390,41 @@ class ApiService {
     await this.request<void>(
       `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/owners/${encodeURIComponent(ownerNamespace)}`,
       { method: 'DELETE' },
+    );
+  }
+
+  /**
+   * The transfer offers this caller can answer: the ones addressed to their own
+   * account, plus any addressed to an organization they own. The sender's side
+   * of its own offer is not listed here.
+   */
+  async getExtensionTransfers(namespace: string, id: string): Promise<ExtensionTransfer[]> {
+    const res = await this.request<{ data: ExtensionTransfer[] }>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/transfers`,
+    );
+    return this.normalizeRows<ExtensionTransfer>(res.data);
+  }
+
+  /**
+   * Offers an extension to another namespace. This records an offer and moves
+   * nothing; the destination accepts it before the address changes, so the
+   * extension can only go somewhere that asked for it.
+   */
+  async offerExtensionTransfer(namespace: string, id: string, to: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/transfers`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ to }),
+      },
+    );
+  }
+
+  /** Accepts an offer addressed to the caller's namespace and moves the extension to it. */
+  async acceptExtensionTransfer(namespace: string, id: string, to: string): Promise<void> {
+    await this.request<void>(
+      `/@${encodeURIComponent(namespace)}/${encodeURIComponent(id)}/transfers/${encodeURIComponent(to)}/accept`,
+      { method: 'POST' },
     );
   }
 

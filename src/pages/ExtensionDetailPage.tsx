@@ -7,6 +7,7 @@ import {
   Extension,
   ExtensionOwner,
   ExtensionOwnerInvite,
+  ExtensionTransfer,
   ExtensionVersion,
   ModerationStatus,
   User,
@@ -18,6 +19,7 @@ import { WebhookPanel } from '../components/WebhookPanel';
 import { BadgePanel } from '../components/BadgePanel';
 import { DistTagPanel } from '../components/DistTagPanel';
 import { OwnersPanel } from '../components/OwnersPanel';
+import { TransferPanel } from '../components/TransferPanel';
 import { DeprecateVersionModal } from '../components/DeprecateVersionModal';
 import { Icon } from '../components/Icon';
 import { toSameOriginImageUrl } from '../lib/profile-image';
@@ -55,9 +57,12 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
   const [badgesOpen, setBadgesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [ownersOpen, setOwnersOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const [owners, setOwners] = useState<ExtensionOwner[]>([]);
   const [pendingInvites, setPendingInvites] = useState<ExtensionOwnerInvite[]>([]);
   const [answeringInvite, setAnsweringInvite] = useState<string | null>(null);
+  const [pendingTransfers, setPendingTransfers] = useState<ExtensionTransfer[]>([]);
+  const [answeringTransfer, setAnsweringTransfer] = useState<string | null>(null);
   const [deprecateTarget, setDeprecateTarget] = useState<ExtensionVersion | null>(null);
   const versionRequestRef = useRef<string | null>(null);
 
@@ -85,6 +90,29 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
     };
   }, [namespace, id, isAuthenticated]);
 
+  // A transfer moves the address only once the destination agrees, and the
+  // destination can only agree here, so a pending offer is announced on the page
+  // it was sent for rather than left in the notification alone.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setPendingTransfers([]);
+      return;
+    }
+    let isMounted = true;
+    api
+      .getExtensionTransfers(namespace, id)
+      .then((rows) => {
+        if (isMounted) setPendingTransfers(rows || []);
+      })
+      .catch(() => {
+        // A caller with no offers to answer simply has none to show.
+        if (isMounted) setPendingTransfers([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [namespace, id, isAuthenticated]);
+
   useEffect(() => {
     let isMounted = true;
     setOwners([]);
@@ -100,6 +128,21 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
       isMounted = false;
     };
   }, [namespace, id]);
+
+  const answerTransfer = async (transfer: ExtensionTransfer) => {
+    setAnsweringTransfer(transfer.to);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      await api.acceptExtensionTransfer(namespace, id, transfer.to);
+      // The extension now lives under the accepting namespace, so follow it
+      // rather than leave the page pointed at the address that just moved.
+      onNavigate(`ext/${transfer.to}/${id}`);
+    } catch (err: unknown) {
+      setActionError(err instanceof ApiError ? err.message : 'Could not accept that transfer.');
+      setAnsweringTransfer(null);
+    }
+  };
 
   const answerInvite = async (invite: ExtensionOwnerInvite, accept: boolean) => {
     setAnsweringInvite(invite.namespace);
@@ -482,6 +525,57 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
             <p className="mt-2 text-ink-3 leading-relaxed">
               An organization has no session of its own, so accepting here speaks for every account
               on its owner list. Nothing is granted until it is accepted.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* A transfer moves the address, and only the destination can agree to it. */}
+      {pendingTransfers.length > 0 && (
+        <div data-tone="info" className="alert">
+          <Icon name="swap_horiz" className="icon-lg shrink-0" />
+          <div className="min-w-0 flex-1">
+            <strong className="font-semibold block text-sm">
+              Waiting on you to accept a transfer
+            </strong>
+            <ul className="mt-2 space-y-2">
+              {pendingTransfers.map((transfer) => (
+                <li
+                  key={transfer.to}
+                  className="flex flex-wrap items-center gap-2 text-xs"
+                  data-testid="pending-transfer"
+                >
+                  <span className="text-ink-2">
+                    <span className="font-mono">@{transfer.to}</span>
+                    {transfer.displayName && (
+                      <span className="text-ink-3 ml-1.5">{transfer.displayName}</span>
+                    )}
+                    {transfer.kind === 'organization' && (
+                      <span className="chip bg-lilac-50 dark:bg-lilac-950 text-lilac-700 dark:text-lilac-300 border-lilac-200 dark:border-lilac-800/60 ml-1.5">
+                        organization
+                      </span>
+                    )}
+                    {transfer.requestedBy && (
+                      <span className="text-ink-3 ml-1.5">offered by @{transfer.requestedBy}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => answerTransfer(transfer)}
+                    disabled={answeringTransfer === transfer.to}
+                    className="btn btn-primary btn-sm"
+                  >
+                    <Icon name="swap_horiz" className="icon-sm" />
+                    <span>
+                      {answeringTransfer === transfer.to ? 'Moving...' : 'Accept transfer'}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-ink-3 leading-relaxed">
+              Accepting moves this extension to the namespace above and points the old address at
+              it. The versions, dist-tags, owners, webhooks and download history move with it.
             </p>
           </div>
         </div>
@@ -885,6 +979,13 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
                   Owners
                 </button>
                 <button
+                  onClick={() => setTransferOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
+                >
+                  <Icon name="swap_horiz" className="icon-sm" />
+                  Transfer
+                </button>
+                <button
                   onClick={() => setWebhooksOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-2 border border-line rounded-lg hover:bg-wash dark:hover:bg-raised transition-colors"
                 >
@@ -936,6 +1037,14 @@ export const ExtensionDetailPage: React.FC<ExtensionDetailPageProps> = ({
           id={extension.id}
           canManage={canManage}
           onClose={() => setOwnersOpen(false)}
+        />
+      )}
+
+      {transferOpen && (
+        <TransferPanel
+          namespace={extension.namespace}
+          id={extension.id}
+          onClose={() => setTransferOpen(false)}
         />
       )}
 
