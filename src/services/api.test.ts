@@ -562,6 +562,49 @@ describe('ApiService', () => {
     expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'POST' }));
   });
 
+  it('getExtensionTransfers reads the pending offers and folds their snake_case row', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        data: [
+          {
+            to: 'acme',
+            display_name: 'Acme Inc',
+            kind: 'organization',
+            created_at: '2026-02-01T00:00:00Z',
+            requested_by: 'kane',
+          },
+        ],
+      }),
+    );
+    const transfers = await api.getExtensionTransfers('kane', 'demo');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/transfers`);
+    expect(transfers[0]).toEqual({
+      to: 'acme',
+      displayName: 'Acme Inc',
+      kind: 'organization',
+      createdAt: '2026-02-01T00:00:00Z',
+      requestedBy: 'kane',
+    });
+  });
+
+  it('offerExtensionTransfer POSTs the destination namespace', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { namespace: 'kane', id: 'demo', to: 'acme' } }, 201),
+    );
+    await api.offerExtensionTransfer('kane', 'demo', 'acme');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/transfers`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ to: 'acme' }) }),
+    );
+  });
+
+  it('acceptExtensionTransfer POSTs to the accept half of the offer', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    await api.acceptExtensionTransfer('kane', 'demo', 'acme');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${baseUrl}/@kane/demo/transfers/acme/accept`);
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: 'POST' }));
+  });
+
   it('deprecateVersion PATCHes a message, and sends null to clear', async () => {
     fetchMock.mockImplementation(() =>
       Promise.resolve(

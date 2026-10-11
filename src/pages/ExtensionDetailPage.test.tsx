@@ -11,6 +11,7 @@ import {
   makeExtensionOwnerInvite,
   makeUser,
   noop,
+  renderWithProviders,
 } from '../test/testUtils';
 
 vi.mock('../services/api');
@@ -39,6 +40,7 @@ beforeEach(() => {
   apiMock.getExtension.mockResolvedValue(versionedExtension());
   apiMock.getExtensionOwners.mockResolvedValue([]);
   apiMock.getPendingExtensionOwnerInvites.mockResolvedValue([]);
+  apiMock.getExtensionTransfers.mockResolvedValue([]);
   apiMock.getUser.mockResolvedValue(makeUser({ namespace: 'kane', displayName: 'Kane' }));
   useAuthMock.mockReset();
   useAuthMock.mockReturnValue(makeAuthState());
@@ -343,5 +345,136 @@ describe('ExtensionDetailPage', () => {
 
     expect(screen.getByText('Manage Extension')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete extension' })).toBeInTheDocument();
+  });
+
+  it('offers to transfer the extension to another namespace from the manage card', async () => {
+    const user = userEvent.setup();
+    // The panel toasts, so this render needs the provider the app wraps pages in.
+    renderWithProviders(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    await user.click(screen.getByRole('button', { name: 'Transfer' }));
+    await user.type(screen.getByLabelText('Destination namespace'), 'acme');
+    await user.click(screen.getByRole('button', { name: /Offer transfer/ }));
+
+    expect(apiMock.offerExtensionTransfer).toHaveBeenCalledWith('kane', 'demo', 'acme');
+  });
+
+  it('lets the destination accept a transfer and follows the extension to its new address', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'acme' }) }));
+    apiMock.getExtensionTransfers.mockResolvedValue([
+      {
+        to: 'acme',
+        displayName: 'Acme Inc',
+        kind: 'organization',
+        requestedBy: 'kane',
+      },
+    ]);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={onNavigate} />);
+
+    const row = await screen.findByTestId('pending-transfer');
+    expect(row).toHaveTextContent('@acme');
+    expect(row).toHaveTextContent('Acme Inc');
+    expect(row).toHaveTextContent('offered by @kane');
+
+    await user.click(within(row).getByRole('button', { name: /Accept transfer/ }));
+
+    expect(apiMock.acceptExtensionTransfer).toHaveBeenCalledWith('kane', 'demo', 'acme');
+    expect(onNavigate).toHaveBeenCalledWith('ext/acme/demo');
+  });
+
+  it('keeps the pending transfer when accepting it fails', async () => {
+    const user = userEvent.setup();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'acme' }) }));
+    apiMock.getExtensionTransfers.mockResolvedValue([
+      { to: 'acme', displayName: 'Acme Inc', requestedBy: 'kane' },
+    ]);
+    apiMock.acceptExtensionTransfer.mockRejectedValue(
+      new ApiError('@acme does not have room for this extension.', 409),
+    );
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    const row = await screen.findByTestId('pending-transfer');
+    await user.click(within(row).getByRole('button', { name: /Accept transfer/ }));
+
+    expect(
+      await screen.findByText('@acme does not have room for this extension.'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('pending-transfer')).toBeInTheDocument();
+  });
+
+  it('shows no transfer banner when nothing is waiting to be accepted', async () => {
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    expect(screen.queryByTestId('pending-transfer')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry transfers' })).toBeNull();
+  });
+
+  it.each([
+    [new ApiError('Transfer service unavailable', 503), 'Transfer service unavailable'],
+    [new ApiError('Not authorized', 403), 'Not authorized'],
+    [new ApiError('Session expired', 401), 'Session expired'],
+    [new TypeError('Failed to fetch'), 'Could not load pending transfers.'],
+  ])('shows a retryable transfer-list error for %s', async (error, message) => {
+    apiMock.getExtensionTransfers.mockRejectedValue(error);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message as string);
+    expect(screen.getByRole('button', { name: 'Retry transfers' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Demo Extension' })).toBeInTheDocument();
+    expect(screen.queryByTestId('pending-transfer')).toBeNull();
+  });
+
+  it('retries failed transfer requests until the recipient can accept an offer', async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    useAuthMock.mockReturnValue(makeAuthState({ user: makeUser({ namespace: 'acme' }) }));
+    apiMock.getExtensionTransfers
+      .mockRejectedValueOnce(new ApiError('Transfer service unavailable', 503))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValue([{ to: 'acme', displayName: 'Acme Inc', requestedBy: 'kane' }]);
+    apiMock.acceptExtensionTransfer.mockResolvedValue(undefined);
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={onNavigate} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Retry transfers' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load pending transfers.');
+    await user.click(screen.getByRole('button', { name: 'Retry transfers' }));
+
+    const row = await screen.findByTestId('pending-transfer');
+    expect(apiMock.getExtensionTransfers).toHaveBeenCalledTimes(3);
+    expect(apiMock.getExtensionTransfers).toHaveBeenLastCalledWith('kane', 'demo');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(apiMock.getExtension).toHaveBeenCalledTimes(1);
+    await user.click(within(row).getByRole('button', { name: /Accept transfer/ }));
+    expect(apiMock.acceptExtensionTransfer).toHaveBeenCalledWith('kane', 'demo', 'acme');
+    expect(onNavigate).toHaveBeenCalledWith('ext/acme/demo');
+  });
+
+  it('clears the transfer-list error when the recipient signs out', async () => {
+    apiMock.getExtensionTransfers.mockRejectedValue(
+      new ApiError('Transfer service unavailable', 503),
+    );
+    const { rerender } = render(
+      <ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />,
+    );
+    await screen.findByRole('alert');
+
+    useAuthMock.mockReturnValue(makeAuthState({ user: null, token: null, isAuthenticated: false }));
+    rerender(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Retry transfers' })).toBeNull();
+    expect(apiMock.getExtensionTransfers).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not ask a visitor for transfer offers it could not answer', async () => {
+    useAuthMock.mockReturnValue(makeAuthState({ user: null, token: null, isAuthenticated: false }));
+    render(<ExtensionDetailPage namespace="kane" id="demo" onNavigate={noop} />);
+    await screen.findByRole('heading', { level: 1, name: 'Demo Extension' });
+
+    expect(apiMock.getExtensionTransfers).not.toHaveBeenCalled();
   });
 });
